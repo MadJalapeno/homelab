@@ -44,9 +44,9 @@ services:
       - ENROLL_INSTANCE_NAME=enroll-name  # Give your instance a name
       - ENROLL_TAGS=traefik,production  # Optional tags
     volumes:
-      - ./config:/etc/crowdsec
-      - ./data:/var/lib/crowdsec/data
-      - ./../traefik/logs:/var/log/traefik:ro  # Point to your Traefik logs directory
+      - ./../crowdsec/config:/etc/crowdsec
+      - ./../crowdsec/data:/var/lib/crowdsec/data
+      - ./traefik/logs:/var/log/traefik:ro  # Point to your Traefik logs directory
     labels:
       - "traefik.enable=false"
 

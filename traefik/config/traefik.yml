@@ -31,7 +31,7 @@ entryPoints:
     address: :443
     http:
       tls:
-        certResolver: cloudflare
+        #certResolver: cloudflare
         domains:
           - main: example.com
             sans:
@@ -44,7 +44,8 @@ certificatesResolvers:
     acme:
       email: "changeme@example.com"
       storage: /etc/traefik/certs/cloudflare-acme.json
-      caServer: 'https://acme-v02.api.letsencrypt.org/directory'
+      #caServer: 'https://acme-v02.api.letsencrypt.org/directory'
+      caServer: 'https://acme-staging-v02.api.letsencrypt.org/directory'
       keyType: EC256
       dnsChallenge:
         provider: cloudflare

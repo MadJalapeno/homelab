@@ -4,7 +4,7 @@
 # colorful output
 RED="\e[31m"
 CYAN="\e[32m"
-ENDCOLOR="\e[0m"
+END="\e[0m"
 
 echo "*******"
 echo "Checking ports available"
@@ -58,7 +58,11 @@ mv .env.demo .env
 
 # update cloudflare API key in .env file
 sed -i -e "s/cf-dns-replace-me/$cloudflare_key/g" .env
+sed -i -e "s/example.com/$domain_name/g" docker-compose.yml
 
+echo
+echo "S{CYAN}Installing ... ${END}"
+echo
 docker compose up -d
 
 # wait for things to start
