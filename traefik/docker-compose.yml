@@ -12,12 +12,62 @@ services:
       - 443:443
       - 8080:8080
     volumes:
-       - /var/run/docker.sock:/var/run/docker.sock:ro
-       - ./config/traefik.yml:/etc/traefik/traefik.yml:ro
-       - ./config/conf/:/etc/traefik/conf/
-       - ./config/certs/:/etc/traefik/certs/
+       - /var/run/docker.sock:/var/run/docker.sock:ro            # docker sock
+       - ./config/traefik.yml:/etc/traefik/traefik.yml:ro        # the traefik config file - not re-read while running
+       - ./config/conf/:/etc/traefik/conf/                       # additional config files that are read while running
+       - ./config/certs/:/etc/traefik/certs/                     # where certificate info is kept
+       - ./logs:/var/log/traefik                                  # log files for crowdsec
     environment:
        - CF_DNS_API_TOKEN=$CF_DNS_API_TOKEN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.example.com`)"
+      - "traefik.http.routers.traefik-secure.entrypoints=websecure"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.example.com`)"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].main=example.com"
+      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.example.com"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    container_name: crowdsec
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - COLLECTIONS=crowdsecurity/traefik crowdsecurity/http-cve
+      - GID=1000
+      - ENROLL_KEY=enroll-key
+      - ENROLL_INSTANCE_NAME=enroll-name  # Give your instance a name
+      - ENROLL_TAGS=traefik,production  # Optional tags
+    volumes:
+      - ./config:/etc/crowdsec
+      - ./data:/var/lib/crowdsec/data
+      - ./../traefik/logs:/var/log/traefik:ro  # Point to your Traefik logs directory
+    labels:
+      - "traefik.enable=false"
+
+  bouncer:
+    image: fbonalair/traefik-crowdsec-bouncer
+    container_name: crowdsec-bouncer
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - CROWDSEC_BOUNCER_API_KEY=${CROWDSEC_BOUNCER_API_KEY}
+      - CROWDSEC_AGENT_HOST=crowdsec:8080
+      - GIN_MODE=release
+      - CROWDSEC_BOUNCER_LOG_LEVEL=debug
+    ports:
+      - "8081:8080"
+    depends_on:
+      - crowdsec
+    labels:
+      - "traefik.enable=false"
+      
 networks:
   proxy:
     external: true
