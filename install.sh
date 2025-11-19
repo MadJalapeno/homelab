@@ -1,3 +1,5 @@
+#!/bin/sh
+
 echo "V 0.0.1"
 
 
@@ -11,6 +13,8 @@ echo "Checking ports available"
 echo "*******"
 echo 
 
+
+# Check port 80 [http]
 if lsof -Pi :80 -sTCP:LISTEN -t >/dev/null ; then
     echo "${RED}Port 80 busy${END}"
     echo lsof -Pi :80 
@@ -19,13 +23,15 @@ else
     echo "Port 80 free"
 fi
 
-if lsof -Pi :4431 -sTCP:LISTEN -t >/dev/null ; then
+# Check port 443 [https]
+if lsof -Pi :443 -sTCP:LISTEN -t >/dev/null ; then
     echo "Port 443 busy"
     exit
 else
     echo "Port 443 free"
 fi
 
+# Check port 8080 [API]
 if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null ; then
     echo "Port 8080 busy"
     exit
@@ -33,18 +39,29 @@ else
     echo "Port 8080 free"
 fi
 
+echo "Checking docker installation"
+if command -v docker &> /dev/null; then
+    echo "Docker installation found"
+else
+    echo "Docker installation not found. Please install docker."
+    exit 1
+fi
+
 echo
-echo "Looks good"
+echo "Everything looks good"
 echo
+echo "Please enter your info"
 
 # Get info for installation
-echo -n "Your Domain Name: "
+echo -n "Your Domain Name for certificates: "
 read domain_name
 echo -n "Your Cloudflare API Key: "
 read cloudflare_key
 echo -n "Email for Lets Encrypt: "
 read email_address
 echo
+
+echo "Downloading files ..."
 
 #download install files
 git clone https://github.com/MadJalapeno/homelab-traefik.git
@@ -71,13 +88,17 @@ docker compose up traefik -d
 # wait for things to start
 echo "Waiting ..."
 sleep 10
+
+docker compose up crowdsec -d 
+
 echo "Still Waiting ..."
 sleep 10
 echo "Alsmost Done ..."
 sleep 10
 
+echo "Getting Crowdsec API key"
 API_KEY = `docker exec crowdsec cscli bouncers add traefik-bouncer`
 
 echo API_KEY
 
-#docker compose down
+docker compose down
