@@ -99,6 +99,6 @@ sleep 10
 echo "Getting Crowdsec API key"
 API_KEY = `docker exec crowdsec cscli bouncers add traefik-bouncer`
 
-echo API_KEY
+echo $API_KEY
 
 docker compose down
