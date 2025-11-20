@@ -5,7 +5,10 @@ global:
 accessLog: {}
 
 log:
-  level: DEBUG
+  level: "INFO"
+  filePath: "/var/log/traefik/traefik.log"
+accessLog:
+  filePath: "/var/log/traefik/access.log"
 
 api:
   dashboard: true
@@ -18,6 +21,8 @@ entryPoints:
   web:
     address: :80
     http:
+      middlewares:
+        - crowdsec-bouncer@file
       redirections:
         entryPoint:
           to: websecure
@@ -38,6 +43,7 @@ entryPoints:
               - '*.example.com'
       middlewares:
         - securityHeaders@file
+        - crowdsec-bouncer@file
 
 certificatesResolvers:
   cloudflare:

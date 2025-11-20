@@ -22,3 +22,11 @@ http:
         stsIncludeSubdomains: true
         stsSeconds: 63072000
         stsPreload: true
+
+    # CrowdSec bouncer
+    crowdsec-bouncer:
+      forwardauth:
+        address: http://bouncer-traefik:8080/api/v1/forwardAuth
+        trustForwardHeader: true
+        authResponseHeaders:
+          - "X-Crowdsec-Action"
