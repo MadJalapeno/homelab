@@ -40,19 +40,19 @@ services:
     environment:
       - COLLECTIONS=crowdsecurity/traefik crowdsecurity/http-cve
       - GID=1000
-      - ENROLL_KEY=enroll-key
-      - ENROLL_INSTANCE_NAME=enroll-name  # Give your instance a name
-      - ENROLL_TAGS=traefik,production  # Optional tags
     volumes:
+      - ./../crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml
       - ./../crowdsec/config:/etc/crowdsec
       - ./../crowdsec/data:/var/lib/crowdsec/data
       - ./logs:/var/log/traefik:ro  # Point to your Traefik logs directory
     labels:
       - "traefik.enable=false"
+    security_opt:
+      - no-new-privileges
 
   bouncer:
     image: fbonalair/traefik-crowdsec-bouncer
-    container_name: crowdsec-bouncer
+    container_name: bouncer-traefik
     restart: unless-stopped
     networks:
       - proxy
@@ -61,8 +61,6 @@ services:
       - CROWDSEC_AGENT_HOST=crowdsec:8080
       - GIN_MODE=release
       - CROWDSEC_BOUNCER_LOG_LEVEL=debug
-    ports:
-      - "8081:8080"
     depends_on:
       - crowdsec
     labels:

@@ -2,8 +2,6 @@ global:
   checkNewVersion: true
   sendAnonymousUsage: true
 
-accessLog: {}
-
 log:
   level: "INFO"
   filePath: "/var/log/traefik/traefik.log"

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "V 0.0.1"
+echo "V 0.0.2"
 
 
 # colorful output
@@ -68,9 +68,10 @@ cd traefik
 # rename .env file
 mv .env.demo .env
 
-# update cloudflare API key in .env file
+# update files with entered information
 sed -i -e "s/cf-dns-replace-me/$cloudflare_key/g" .env
 sed -i -e "s/example.com/$domain_name/g" docker-compose.yml
+sed -i -e "s/example.com/$domain_name/g" ./config/traefik.yml
 sed -i -e "s/your-email/$email_address/g" ./config/traefik.yml
 
 echo
