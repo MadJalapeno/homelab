@@ -13,9 +13,9 @@ services:
       - 8080:8080
     volumes:
        - /var/run/docker.sock:/var/run/docker.sock:ro            # docker sock
-       - ./config/traefik.yml:/etc/traefik/traefik.yml:ro        # the traefik config file - not re-read while running
-       - ./config/conf/:/etc/traefik/conf/                       # additional config files that are read while running
-       - ./config/certs/:/etc/traefik/certs/                     # where certificate info is kept
+       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro        # the traefik config file - not re-read while running
+       - ./traefik/conf/:/etc/traefik/conf/                       # additional config files that are read while running
+       - ./traefik/certs/:/etc/traefik/certs/                     # where certificate info is kept
        - ./logs:/var/log/traefik                                  # log files for crowdsec to analyze
     environment:
        - CF_DNS_API_TOKEN=$CF_DNS_API_TOKEN
@@ -41,14 +41,16 @@ services:
       - COLLECTIONS=crowdsecurity/traefik crowdsecurity/http-cve
       - GID=1000
     volumes:
-      - ./../crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml
-      - ./../crowdsec/config:/etc/crowdsec
-      - ./../crowdsec/data:/var/lib/crowdsec/data
+      - ./crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml
+      - ./crowdsec/config:/etc/crowdsec
+      - ./crowdsec/data:/var/lib/crowdsec/data
       - ./logs:/var/log/traefik:ro  # Point to your Traefik logs directory
     labels:
       - "traefik.enable=false"
     security_opt:
       - no-new-privileges
+    depends_on:
+      - traefik
 
   bouncer:
     image: fbonalair/traefik-crowdsec-bouncer
