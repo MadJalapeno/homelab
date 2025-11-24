@@ -128,44 +128,34 @@ echo "${CYAN}Creating directory structure...${END}"
 
 # Create main directory structure
 mkdir -p "$install_dir"
+
+# change into the install directory
 cd "$install_dir"
 
-# Create subdirectories
-mkdir -p traefik/conf
-mkdir -p traefik/certs
-mkdir -p crowdsec/config
-mkdir -p crowdsec/data
-mkdir -p logs
-
-echo "${GREEN}Directory structure created at: $install_dir${END}"
 echo "${CYAN}Certificates will be stored in: ${YELLOW}$install_dir/traefik/config/certs/${END}"
 echo "${CYAN}Dynamic configs monitored in: ${YELLOW}$install_dir/traefik/config/conf/${END}"
 echo
 
 echo "${CYAN}Downloading configuration files...${END}"
 
-# Clone the repo to a temp location
+# Clone the repo to the install folder
 TEMP_DIR=$(mktemp -d)
-git clone https://github.com/MadJalapeno/homelab-traefik.git "$TEMP_DIR"
+git clone https://github.com/MadJalapeno/homelab-traefik.git "$install_dir"
+rm -r .git
+rm install.sh
 
-# Copy files to proper locations
-cp -r "$TEMP_DIR/traefik/config/"* traefik/config/ 2>/dev/null || true
-cp "$TEMP_DIR/crowdsec/acquis.yaml" crowdsec/ 2>/dev/null || true
-cp "$TEMP_DIR/traefik/.env.demo" .env 2>/dev/null || echo "CF_DNS_API_TOKEN=your-token-here" > .env
-
-# Clean up temp directory
-rm -rf "$TEMP_DIR"
-
-echo "${GREEN}Configuration files downloaded${END}"
 echo
 echo "${CYAN}Configuring files with your information...${END}"
 
 # Update .env file
-sed -i "s/cf-dns-replace-me/$cloudflare_key/g" .env
-sed -i "s/your-token-here/$cloudflare_key/g" .env
+mv traefik/.env.demo traefik/.env
+echo "Updating .env file"
+sed -i "s/cf-dns-replace-me/$cloudflare_key/g" traefik/.env
+sed -i "s/your-token-here/$cloudflare_key/g" traefik/.env
 
 # Update docker-compose.yml
-sed -i "s/example.com/$domain_name/g" docker-compose.yml
+echo "Updating docker-compose.yml"
+sed -i "s/example.com/$domain_name/g" traefik/docker-compose.yml
 
 # Update traefik config if it exists
 if [ -f traefik/config/traefik.yml ]; then
@@ -173,106 +163,7 @@ if [ -f traefik/config/traefik.yml ]; then
     sed -i "s/your-email/$email_address/g" traefik/config/traefik.yml
 fi
 
-# Create a README for dynamic configs
-cat > traefik/config/conf/README.md << 'README_EOF'
-# Traefik Dynamic Configuration Directory
-
-This directory is monitored by Traefik for configuration changes in real-time.
-
-## How to Use
-
-1. Create `.yml` or `.yaml` files in this directory
-2. Traefik will automatically detect and apply changes (no restart needed)
-3. Use these for defining routers, services, and middlewares
-
-## File Naming
-
-- Use descriptive names: `whoami.yml`, `nextcloud.yml`, etc.
-- Files must have `.yml` or `.yaml` extension
-- Files ending in `.example` are ignored
-
-## Example Structure
-
-```yaml
-http:
-  routers:
-    myapp:
-      rule: "Host(\`myapp.example.com\`)"
-      entryPoints:
-        - websecure
-      service: myapp
-      tls:
-        certResolver: cloudflare
-      middlewares:
-        - crowdsec-bouncer@file
-
-  services:
-    myapp:
-      loadBalancer:
-        servers:
-          - url: "http://myapp-container:8080"
-
-  middlewares:
-    crowdsec-bouncer:
-      forwardAuth:
-        address: http://bouncer-traefik:8080/api/v1/forwardAuth
-        trustForwardHeader: true
-```
-
-## Testing Configuration
-
-After adding a file, check Traefik logs:
-```bash
-docker compose logs -f traefik
-```
-
-## Common Patterns
-
-### Simple HTTP Service
-```yaml
-http:
-  routers:
-    service-name:
-      rule: "Host(\`service.domain.com\`)"
-      service: service-name
-  services:
-    service-name:
-      loadBalancer:
-        servers:
-          - url: "http://container:port"
-```
-
-### With Authentication
-```yaml
-http:
-  routers:
-    secure-app:
-      rule: "Host(\`app.domain.com\`)"
-      middlewares:
-        - auth
-        - crowdsec-bouncer@file
-      service: secure-app
-  
-  middlewares:
-    auth:
-      basicAuth:
-        users:
-          - "admin:$apr1$..." # Use htpasswd to generate
-  
-  services:
-    secure-app:
-      loadBalancer:
-        servers:
-          - url: "http://app:8080"
-```
-
-## Documentation
-
-Full documentation: https://doc.traefik.io/traefik/providers/file/
-README_EOF
-
 echo "${GREEN}Configuration complete${END}"
-echo "${GREEN}Sample dynamic config created: traefik/config/conf/sample-service.yml.example${END}"
 echo
 
 # Create the proxy network if it doesn't exist
@@ -280,19 +171,8 @@ echo "${CYAN}Creating Docker network...${END}"
 docker network create proxy 2>/dev/null && echo "${GREEN}Network 'proxy' created${END}" || echo "${YELLOW}Network 'proxy' already exists${END}"
 echo
 
-exit 
 
-
-
-
-
-
-
-
-
-
-
-
+cd traefik
 echo "${CYAN}Starting Traefik...${END}"
 docker compose up traefik -d
 

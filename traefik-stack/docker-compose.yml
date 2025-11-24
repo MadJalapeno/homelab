@@ -13,8 +13,8 @@ services:
       - 8080:8080
     volumes:
        - /var/run/docker.sock:/var/run/docker.sock:ro            # docker sock
-       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro        # the traefik config file - not re-read while running
-       - ./traefik/conf/:/etc/traefik/conf/                       # additional config files that are read while running
+       - ./traefik/config/traefik.yml:/etc/traefik/traefik.yml:ro        # the traefik config file - not re-read while running
+       - ./traefik/config/conf/:/etc/traefik/conf/                       # additional config files that are read while running
        - ./traefik/certs/:/etc/traefik/certs/                     # where certificate info is kept
        - ./logs:/var/log/traefik                                  # log files for crowdsec to analyze
     environment:
