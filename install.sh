@@ -1,5 +1,5 @@
 #!/bin/sh
-echo "V 0.1.0 - Grouped Stack Approach"
+echo "Traefik - Crowdsec install V 0.1.1"
 # colorful output
 RED="\e[31m"
 CYAN="\e[36m"
@@ -209,7 +209,7 @@ echo
 
 # Add the API key to the .env file
 if grep -q "CROWDSEC_BOUNCER_API_KEY" .env; then
-    sed -i "s/cs-bouncer-key/$API_KEY/g" .env
+    sed -i "s|cs-bouncer-key|$API_KEY|g" .env
 else
     echo "CROWDSEC_BOUNCER_API_KEY=$API_KEY" >> .env
 fi
